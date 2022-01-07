@@ -16,6 +16,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.alfinaditia.trangps.databinding.ActivityMapsBinding
 import com.google.android.gms.location.*
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -71,6 +74,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun onLocationResult(locationResult: LocationResult) {
                 if (locationResult.locations.isNotEmpty()) {
                     val location = locationResult.lastLocation
+
+                    lateinit var databaseRef: DatabaseReference
+                    databaseRef = Firebase.database.reference
+                    val locationlogging = LocationLogging(location.latitude, location.longitude)
+                    databaseRef.child("userlocation").setValue(locationlogging)
+                        .addOnSuccessListener {
+                            Toast.makeText(applicationContext, "Locations written into the database", Toast.LENGTH_LONG).show()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(applicationContext, "Error occured while writing the locations", Toast.LENGTH_LONG).show()
+                        }
                     if (location != null) {
                         val latLng = LatLng(location.latitude, location.longitude)
                         val markerOptions = MarkerOptions().position(latLng)
@@ -81,7 +95,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
-
+    private fun startLocationUpdates() {
+        fusedLocationClient.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            null
+        )
+    }
 
     /**
      * Manipulates the map once available.
@@ -100,11 +120,5 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         map.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
         map.moveCamera(CameraUpdateFactory.newLatLng(sydney)) */
     }
-    private fun startLocationUpdates() {
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            null
-        )
-    }
+
 }
